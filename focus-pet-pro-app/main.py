@@ -7,6 +7,15 @@ from PyQt6.QtCore import QTimer, Qt, QUrl, QSettings, pyqtSignal
 from PyQt6.QtGui import QIcon, QAction
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage
+import PyQt6.QtSvg  # Force PyInstaller to bundle SVG plugin for Windows
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path).replace("\\", "/")
 
 # Allow WebEngine to play video files from local filesystem without complaining
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--autoplay-policy=no-user-gesture-required --disable-web-security"
@@ -50,8 +59,7 @@ class LockScreenWindow(QWidget):
         
         self.webview.page().setBackgroundColor(Qt.GlobalColor.transparent)
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        html_path = os.path.join(current_dir, 'lock_screen.html')
+        html_path = resource_path('lock_screen.html')
         
         self.webview.loadFinished.connect(self.on_load_finished)
         self.webview.setUrl(QUrl.fromLocalFile(html_path))
@@ -230,9 +238,20 @@ class CatGatekeeperApp(QWidget):
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(self.status_label)
         
+        footer_layout = QHBoxLayout()
         footer_label = QLabel("by Hoai Nam")
         footer_label.setObjectName("footer")
-        main_layout.addWidget(footer_label)
+        
+        self.info_btn = QPushButton("ℹ")
+        self.info_btn.setObjectName("infoBtn")
+        self.info_btn.setFixedSize(24, 24)
+        self.info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.info_btn.clicked.connect(self.show_about)
+        
+        footer_layout.addWidget(footer_label)
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.info_btn)
+        main_layout.addLayout(footer_layout)
         
         self.setLayout(main_layout)
         
@@ -255,6 +274,13 @@ class CatGatekeeperApp(QWidget):
         if self.show_cat_cb.isChecked():
             self.start_tracking()
 
+    def show_about(self):
+        from PyQt6.QtWidgets import QMessageBox
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Về Tác Giả" if self.current_lang == "vi" else "About Author")
+        msg.setText("<b>Trần Hoài Nam</b><br>K21 Sinh Viên Đại Học FPT<br>Chuyên Ngành AI")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
     def setup_settings_tab(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(5, 15, 5, 5)
@@ -422,10 +448,17 @@ class CatGatekeeperApp(QWidget):
 
     def setup_autostart(self, enable):
         import platform
+        executable = sys.executable
+        is_bundled = getattr(sys, 'frozen', False)
+        
         if platform.system() == "Darwin":
             plist_path = os.path.expanduser("~/Library/LaunchAgents/com.hoainam.catgatekeeper.plist")
             if enable:
-                script_path = os.path.abspath(__file__)
+                if is_bundled:
+                    args_xml = f'<string>{executable}</string>'
+                else:
+                    args_xml = f'<string>{executable}</string>\n        <string>{os.path.abspath(__file__)}</string>'
+                    
                 plist_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -434,8 +467,7 @@ class CatGatekeeperApp(QWidget):
     <string>com.hoainam.catgatekeeper</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python3</string>
-        <string>{script_path}</string>
+        {args_xml}
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -456,7 +488,11 @@ class CatGatekeeperApp(QWidget):
             try:
                 registry_key = winreg.OpenKey(key, key_path, 0, winreg.KEY_ALL_ACCESS)
                 if enable:
-                    winreg.SetValueEx(registry_key, "CatGatekeeper", 0, winreg.REG_SZ, sys.executable + ' "' + os.path.abspath(__file__) + '"')
+                    if is_bundled:
+                        cmd = f'"{executable}"'
+                    else:
+                        cmd = f'"{executable}" "{os.path.abspath(__file__)}"'
+                    winreg.SetValueEx(registry_key, "CatGatekeeper", 0, winreg.REG_SZ, cmd)
                 else:
                     winreg.DeleteValue(registry_key, "CatGatekeeper")
                 winreg.CloseKey(registry_key)
@@ -545,20 +581,23 @@ class CatGatekeeperApp(QWidget):
         self.tray_icon.showMessage(title, msg, QSystemTrayIcon.MessageIcon.Information, 2000)
 
     def apply_dark_theme(self):
-        self.setStyleSheet("""
-            QWidget {
+        toggle_off = resource_path("assets/toggle_off.svg")
+        toggle_on = resource_path("assets/toggle_on.svg")
+        
+        self.setStyleSheet(f"""
+            QWidget {{
                 background-color: #0f172a;
                 color: #f8fafc;
                 font-family: ".AppleSystemUIFont", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            }
-            QTabWidget::pane {
+            }}
+            QTabWidget::pane {{
                 border: none;
                 background: transparent;
-            }
-            QTabWidget::tab-bar {
+            }}
+            QTabWidget::tab-bar {{
                 alignment: center;
-            }
-            QTabBar::tab {
+            }}
+            QTabBar::tab {{
                 background: transparent;
                 color: #64748b;
                 padding: 10px 24px;
@@ -614,18 +653,18 @@ class CatGatekeeperApp(QWidget):
             }
             QCheckBox {
                 spacing: 0px;
-            }
-            QCheckBox::indicator {
+            }}
+            QCheckBox::indicator {{
                 width: 44px;
                 height: 26px;
-                image: url(assets/toggle_off.svg);
+                image: url('{toggle_off}');
                 border: none;
                 background: transparent;
-            }
-            QCheckBox::indicator:checked {
-                image: url(assets/toggle_on.svg);
-            }
-            QPushButton#saveBtn {
+            }}
+            QCheckBox::indicator:checked {{
+                image: url('{toggle_on}');
+            }}
+            QPushButton#saveBtn {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #8b5cf6);
                 color: white;
                 border: none;
@@ -638,12 +677,24 @@ class CatGatekeeperApp(QWidget):
             QPushButton#saveBtn:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563eb, stop:1 #7c3aed);
             }
-            QLabel#savedMsg {
+            QLabel#savedMsg {{
                 font-size: 14px;
                 color: #10b981;
                 font-weight: bold;
                 margin-top: 5px;
-            }
+            }}
+            QPushButton#infoBtn {{
+                background-color: #334155;
+                color: #e2e8f0;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: bold;
+                border: none;
+            }}
+            QPushButton#infoBtn:hover {{
+                background-color: #3b82f6;
+                color: white;
+            }}
             
             /* CleanMyMac Style Dashboard Cards */
             QFrame#dashboardCard {
@@ -664,11 +715,18 @@ class CatGatekeeperApp(QWidget):
                 color: #94a3b8;
                 font-weight: 600;
                 background: transparent;
-            }
+            }}
         """)
 
 def main():
+    # Fix High DPI scaling and visual glitches on Windows
+    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    
     app = QApplication(sys.argv)
+    if os.name == 'nt':
+        app.setStyle("Fusion")
+    
     app.setQuitOnLastWindowClosed(False)
     window = CatGatekeeperApp()
     window.show()
