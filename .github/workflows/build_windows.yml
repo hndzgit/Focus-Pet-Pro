@@ -1,0 +1,41 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Tải mã nguồn
+      uses: actions/checkout@v4
+    
+    - name: Cài đặt Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Cài đặt Thư viện
+      working-directory: ./focus-pet-pro-app
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyqt6 pyqt6-webengine pyinstaller pillow
+        
+    - name: Đóng gói Ứng dụng (.exe)
+      working-directory: ./focus-pet-pro-app
+      run: |
+        pyinstaller --noconfirm --onedir --windowed --icon "assets\icon.ico" --add-data "assets;assets" --add-data "lock_screen.html;." --name "FocusPetPro" main.py
+        
+    - name: Tạo File Cài đặt (Setup.exe)
+      working-directory: ./focus-pet-pro-app
+      run: |
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+        
+    - name: Tải File Cài đặt lên Github
+      uses: actions/upload-artifact@v4
+      with:
+        name: FocusPetPro-Windows-Installer
+        path: focus-pet-pro-app/Output/FocusPetPro_Setup.exe
