@@ -32,7 +32,7 @@ jobs:
     - name: Tạo File Cài đặt (Setup.exe)
       working-directory: ./focus-pet-pro-app
       run: |
-        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
         
     - name: Tải File Cài đặt lên Github
       uses: actions/upload-artifact@v4
