@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: transparent;
+    overflow: hidden;
+  }
+  
+  #cat-gatekeeper-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 1s;
+    opacity: 1;
+  }
+
+  #cat-gatekeeper-overlay video {
+    height: 100vh;
+    width: auto;
+  }
+
+  #cat-gatekeeper-overlay video.sleeping {
+    transform: translateX(0);
+  }
+
+  #cat-gatekeeper-countdown {
+    position: absolute;
+    top: 20vh;
+    left: 35%;
+    transform: translateX(-50%);
+    font-size: 160px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.95);
+    font-family: ".AppleSystemUIFont", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    border-radius: 30px;
+    padding: 60px 80px;
+    line-height: 1;
+    z-index: 10;
+  }
+
+  #snooze-btn {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    padding: 16px 32px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: ".AppleSystemUIFont", -apple-system, BlinkMacSystemFont, sans-serif;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 20;
+  }
+  #snooze-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+  <div id="cat-gatekeeper-overlay">
+    <div id="cat-gatekeeper-countdown">0:00</div>
+    <button id="snooze-btn" onclick="requestSnooze()">Snooze 5 Minutes</button>
+    <video id="dog1" autoplay muted playsinline preload="auto"></video>
+    <video id="dog2" muted playsinline loop preload="auto" style="display: none;"></video>
+  </div>
+
+  <script>
+    const countdownEl = document.getElementById('cat-gatekeeper-countdown');
+    const dog1 = document.getElementById('dog1');
+    const dog2 = document.getElementById('dog2');
+
+    dog1.src = 'assets/dog1.webm';
+    dog2.src = 'assets/dog2.webm';
+
+    dog1.addEventListener('ended', () => {
+      dog1.style.display = 'none';
+      dog2.style.display = 'block';
+      dog2.classList.add('sleeping');
+      dog2.play();
+    });
+
+    // Exposed function for Python to call to update the timer text
+    function updateCountdown(minutes, seconds) {
+      countdownEl.innerText = `${minutes}:${String(seconds).padStart(2, '0')}`;
+    }
+    
+    function setLanguage(lang) {
+      const snoozeBtn = document.getElementById('snooze-btn');
+      if (lang === 'vi') {
+        snoozeBtn.innerText = 'Xin thêm 5 phút';
+      } else {
+        snoozeBtn.innerText = 'Snooze 5 Minutes';
+      }
+    }
+    
+    function requestSnooze() {
+      window.location.href = "gatekeeper://snooze";
+    }
+
+    function fadeOut() {
+      document.body.classList.add('fade-out');
+    }
+  </script>
+</body>
+</html>
