@@ -24,7 +24,7 @@ class CustomWebPage(QWebEnginePage):
     snooze_requested = pyqtSignal()
     
     def acceptNavigationRequest(self, url, _type, isMainFrame):
-        if url.scheme() == "gatekeeper" and url.host() == "snooze":
+        if url.host() == "snooze.local":
             self.snooze_requested.emit()
             return False
         return super().acceptNavigationRequest(url, _type, isMainFrame)
