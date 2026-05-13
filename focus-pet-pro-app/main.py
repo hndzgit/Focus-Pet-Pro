@@ -584,20 +584,20 @@ class CatGatekeeperApp(QWidget):
         toggle_off = resource_path("assets/toggle_off.svg")
         toggle_on = resource_path("assets/toggle_on.svg")
         
-        self.setStyleSheet(f"""
-            QWidget {{
+        css = """
+            QWidget {
                 background-color: #0f172a;
                 color: #f8fafc;
                 font-family: ".AppleSystemUIFont", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            }}
-            QTabWidget::pane {{
+            }
+            QTabWidget::pane {
                 border: none;
                 background: transparent;
-            }}
-            QTabWidget::tab-bar {{
+            }
+            QTabWidget::tab-bar {
                 alignment: center;
-            }}
-            QTabBar::tab {{
+            }
+            QTabBar::tab {
                 background: transparent;
                 color: #64748b;
                 padding: 10px 24px;
@@ -653,18 +653,18 @@ class CatGatekeeperApp(QWidget):
             }
             QCheckBox {
                 spacing: 0px;
-            }}
-            QCheckBox::indicator {{
+            }
+            QCheckBox::indicator {
                 width: 44px;
                 height: 26px;
-                image: url('{toggle_off}');
+                image: url('__TOGGLE_OFF__');
                 border: none;
                 background: transparent;
-            }}
-            QCheckBox::indicator:checked {{
-                image: url('{toggle_on}');
-            }}
-            QPushButton#saveBtn {{
+            }
+            QCheckBox::indicator:checked {
+                image: url('__TOGGLE_ON__');
+            }
+            QPushButton#saveBtn {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #8b5cf6);
                 color: white;
                 border: none;
@@ -677,24 +677,24 @@ class CatGatekeeperApp(QWidget):
             QPushButton#saveBtn:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563eb, stop:1 #7c3aed);
             }
-            QLabel#savedMsg {{
+            QLabel#savedMsg {
                 font-size: 14px;
                 color: #10b981;
                 font-weight: bold;
                 margin-top: 5px;
-            }}
-            QPushButton#infoBtn {{
+            }
+            QPushButton#infoBtn {
                 background-color: #334155;
                 color: #e2e8f0;
                 border-radius: 12px;
                 font-size: 14px;
                 font-weight: bold;
                 border: none;
-            }}
-            QPushButton#infoBtn:hover {{
+            }
+            QPushButton#infoBtn:hover {
                 background-color: #3b82f6;
                 color: white;
-            }}
+            }
             
             /* CleanMyMac Style Dashboard Cards */
             QFrame#dashboardCard {
@@ -715,8 +715,11 @@ class CatGatekeeperApp(QWidget):
                 color: #94a3b8;
                 font-weight: 600;
                 background: transparent;
-            }}
-        """)
+            }
+        """
+        css = css.replace('__TOGGLE_OFF__', toggle_off)
+        css = css.replace('__TOGGLE_ON__', toggle_on)
+        self.setStyleSheet(css)
 
 def main():
     # Fix High DPI scaling and visual glitches on Windows
